@@ -20,17 +20,17 @@
 package org.elasticsearch.index;
 
 import org.elasticsearch.cluster.ClusterState;
-import org.elasticsearch.common.Strings;
 import org.elasticsearch.common.UUIDs;
 import org.elasticsearch.common.bytes.BytesReference;
+import org.elasticsearch.common.xcontent.ToXContent;
 import org.elasticsearch.common.xcontent.XContentBuilder;
-import org.elasticsearch.common.xcontent.XContentFactory;
 import org.elasticsearch.common.xcontent.XContentParser;
 import org.elasticsearch.common.xcontent.json.JsonXContent;
 import org.elasticsearch.test.ESTestCase;
+
 import java.io.IOException;
+
 import static org.apache.lucene.util.TestUtil.randomSimpleString;
-import static org.elasticsearch.common.xcontent.ToXContent.EMPTY_PARAMS;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.not;
@@ -55,7 +55,7 @@ public class IndexTests extends ESTestCase {
         final String uuid = UUIDs.randomBase64UUID();
         final Index original = new Index(name, uuid);
         final XContentBuilder builder = JsonXContent.contentBuilder();
-        original.toXContent(builder, EMPTY_PARAMS);
+        original.toXContent(builder, ToXContent.EMPTY_PARAMS);
         try (XContentParser parser = createParser(JsonXContent.jsonXContent, BytesReference.bytes(builder))) {
             parser.nextToken(); // the beginning of the parser
             assertThat(Index.fromXContent(parser), equalTo(original));
@@ -75,40 +75,4 @@ public class IndexTests extends ESTestCase {
         assertNotEquals(index1, index3);
         assertNotEquals(index1, index4);
     }
-
-    public void testHashCode() {
-        Index index1 = new Index("a", "a");
-        Index index2 = new Index("a", "a");
-        Index index3 = new Index("a", "b");
-        Index index4 = new Index("b", "a");
-
-        //test that the same object has the same hashcode
-        assertEquals(index1.hashCode(), index1.hashCode());
-
-        //test that different objects with same name and uuid have the same hashcode
-        assertEquals(index1.hashCode(), index2.hashCode());
-
-        //test that objects with different name have different hashcode
-        assertNotEquals(index1.hashCode(), index3.hashCode());
-
-        //test that objects with different uuid have different hashcode
-        assertNotEquals(index1.hashCode(), index4.hashCode());
-
-    }
-
-    public void testToXContent() throws Exception  {
-        XContentBuilder builder1 = XContentFactory.jsonBuilder();
-        builder1.startObject();
-        builder1.field("index_name", "a");
-        builder1.field("index_uuid", "b");
-        builder1.endObject();
-
-        Index index = new Index("a", "b");
-        XContentBuilder builder2 = XContentFactory.jsonBuilder();
-        index.toXContent(builder2,EMPTY_PARAMS);
-
-        assertEquals(Strings.toString(builder1), Strings.toString(builder2));
-
-    }
-
 }
